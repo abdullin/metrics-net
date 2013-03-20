@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+﻿using System.Linq;
 using metrics.Core;
 using metrics.Stats;
 
@@ -100,6 +101,22 @@ namespace metrics.Tests.Core
             underTest.Update(9);
             underTest.Update(8);
             Assert.AreEqual(2, underTest.SampleCount);
+        }
+
+        [Test]
+        public void BiasedHistogram_UsesSample()
+        {
+            var underTest = new HistogramMetric(HistogramMetric.SampleType.Biased);
+            var sampleSize = 1028;
+            var sample = Enumerable.Range(1, sampleSize).ToList();
+
+            foreach (var s in sample)
+            {
+                underTest.Update(s);
+            }
+
+            Assert.AreEqual(sampleSize, underTest.SampleCount);
+            CollectionAssert.AreEquivalent(sample, underTest.Values);
         }
 
         [Test]
