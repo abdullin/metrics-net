@@ -89,7 +89,7 @@ namespace metrics.Stats
                         long removed;
                         while(!_values.TryRemove(first, out removed))
                         {
-                            first = _values.Keys.First();
+                            first = _values.Keys.Min();
                         }
                     }
                 }
