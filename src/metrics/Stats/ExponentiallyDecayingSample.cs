@@ -30,6 +30,7 @@ namespace metrics.Stats
         private readonly AtomicLong _count = new AtomicLong(0);
         private VolatileLong _startTime;
         private readonly AtomicLong _nextScaleTime = new AtomicLong(0);
+        private readonly ThreadLocalRandom _threadLocalRandom = new ThreadLocalRandom();
 
         /// <param name="reservoirSize">The number of samples to keep in the sampling reservoir</param>
         /// <param name="alpha">The exponential decay factor; the higher this is, the more biased the sample will be towards newer values</param>
@@ -49,7 +50,7 @@ namespace metrics.Stats
         {
             _values.Clear();
             _count.Set(0);
-            _startTime = Tick();
+            _startTime = CurrentTimeInSeconds();
         }
         
         /// <summary>
@@ -65,7 +66,7 @@ namespace metrics.Stats
         /// </summary>
         public void Update(long value)
         {
-            Update(value, Tick());
+            Update(value, CurrentTimeInSeconds());
         }
 
         private void Update(long value, long timestamp)
@@ -73,15 +74,18 @@ namespace metrics.Stats
             _lock.EnterReadLock();
             try
             {
-                var priority = Weight(timestamp - _startTime) / Support.Random.NextLong();
+                var random = _threadLocalRandom.NextNonzeroDouble();
+                var weight = Weight(timestamp - _startTime);
+                var priority = weight / random;
                 var newCount = _count.IncrementAndGet();
+
                 if(newCount <= _reservoirSize)
                 {
                     _values.AddOrUpdate(priority, value, (p, v) => v);
                 }
                 else
                 {
-                    var first = _values.Keys.First();
+                    var first = _values.Keys.Min();
                     if(first < priority)
                     {
                         _values.AddOrUpdate(priority, value, (p, v) => v);
@@ -114,21 +118,29 @@ namespace metrics.Stats
         {
             get
             {
+                Dictionary<double, long> values;
                 _lock.EnterReadLock();
                 try
                 {
-                    return new List<long>(_values.Values);
+                    values = new Dictionary<double, long>(_values);
                 }
                 finally
                 {
                     _lock.ExitReadLock();
                 }
+
+                return values.OrderBy(kv => kv.Key).Select(kv => kv.Value).ToList();
             }
         }
 
         private static long Tick()
         {
             return DateTime.Now.Ticks;
+        }
+
+        private static long CurrentTimeInSeconds()
+        {
+            return DateTime.Now.Ticks/TimeSpan.TicksPerSecond;
         }
 
         private double Weight(long t)
@@ -168,7 +180,7 @@ namespace metrics.Stats
             try
             {
                 var oldStartTime = _startTime;
-                _startTime = Tick();
+                _startTime = CurrentTimeInSeconds();
                 var keys = new List<double>(_values.Keys);
                 foreach (var key in keys)
                 {
