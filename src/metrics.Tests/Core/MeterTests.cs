@@ -11,6 +11,14 @@ namespace metrics.Tests.Core
     public class MeterTests
     {
         [Test]
+        public void Should_Not_Return_Infinities()
+        {
+            var meter = Metrics.Meter(typeof(MeterTests), "empty", "test", TimeUnit.Seconds);
+            Assert.AreEqual(0, meter.Count);
+            Assert.AreEqual(0.0, meter.MeanRate);
+        }
+
+        [Test]
         public void Can_count()
         {
             var meter = Metrics.Meter(typeof(MeterTests), "Can_count", "test", TimeUnit.Seconds);
