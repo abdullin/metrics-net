@@ -14,7 +14,6 @@ namespace metrics.Core
     public class MeterMetric : IMetric, IMetered, IDisposable
     {
         private AtomicLong _count = new AtomicLong();
-        private readonly long _startTime = DateTime.Now.Ticks;
         private static readonly TimeSpan Interval = TimeSpan.FromSeconds(5);
 
         private EWMA _m1Rate = EWMA.OneMinuteEWMA();
@@ -41,6 +40,7 @@ namespace metrics.Core
 
         private MeterMetric(string eventType, TimeUnit rateUnit)
         {
+            StartTime = DateTime.Now.Ticks;
             EventType = eventType;
             RateUnit = rateUnit;
         }
@@ -93,6 +93,12 @@ namespace metrics.Core
         }
 
         /// <summary>
+        ///  Returns the starting Time of the meter
+        /// </summary>
+        /// <returns></returns>
+        public long StartTime { get; private set; }
+
+        /// <summary>
         /// Returns the fifteen-minute exponentially-weighted moving average rate at
         /// which events have occured since the meter was created
         /// <remarks>
@@ -133,7 +139,7 @@ namespace metrics.Core
             {
                 if (Count != 0)
                 {
-                    var elapsed = (DateTime.Now.Ticks - _startTime) * 100; // 1 DateTime Tick == 100ns
+                    var elapsed = (DateTime.Now.Ticks - StartTime) * 100; // 1 DateTime Tick == 100ns
                     return ConvertNanosRate(Count / (double)elapsed);
                 }
                 return 0.0;
@@ -169,6 +175,7 @@ namespace metrics.Core
             {
                 var metric = new MeterMetric(EventType, RateUnit)
                                  {
+                                     StartTime = StartTime,
                                      _count = Count,
                                      _m1Rate = _m1Rate,
                                      _m5Rate = _m5Rate,

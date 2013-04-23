@@ -10,12 +10,20 @@ namespace metrics.Tests.Core
     [TestFixture]
     public class MeterTests
     {
+        private MeterMetric _uploadThroughput;
+
         [Test]
         public void Should_Not_Return_Infinities()
         {
             var meter = Metrics.Meter(typeof(MeterTests), "empty", "test", TimeUnit.Seconds);
-            Assert.AreEqual(0, meter.Count);
-            Assert.AreEqual(0.0, meter.MeanRate);
+            meter.Mark();
+            Thread.Sleep(5);
+            var sameMeter = Metrics.AllSorted[new MetricName(typeof(MeterTests), "empty")] as MeterMetric;
+            var sameMeter2 = Metrics.All[new MetricName(typeof(MeterTests), "empty")] as MeterMetric;
+
+            Assert.IsFalse(Double.IsInfinity(meter.MeanRate));
+            Assert.IsFalse(Double.IsInfinity(sameMeter.MeanRate));
+            Assert.IsFalse(Double.IsInfinity(sameMeter2.MeanRate));
         }
 
         [Test]
