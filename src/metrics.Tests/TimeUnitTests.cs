@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using NUnit.Framework;
 
 namespace metrics.Tests
@@ -13,6 +14,15 @@ namespace metrics.Tests
             var actual = TimeUnit.Nanoseconds.ToNanos(expected);
             Trace.WriteLine(actual);
             Assert.AreEqual(1000L, actual);
+        }
+
+        [Test]
+        public void Can_convert_seconds_to_ticks()
+        {
+            const long expected = 1;
+            var actual = TimeUnit.Seconds.ToTicks(expected);
+            Trace.WriteLine(actual);
+            Assert.AreEqual(TimeSpan.TicksPerSecond, actual);
         }
 
         [Test]

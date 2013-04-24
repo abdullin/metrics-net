@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading;
@@ -106,6 +107,7 @@ namespace metrics.Stats
 
             var now = DateTime.Now.Ticks;
             var next = _nextScaleTime.Get();
+            
             if(now >= next)
             {
                 Rescale(now, next);
@@ -132,6 +134,11 @@ namespace metrics.Stats
 
                 return values.OrderBy(kv => kv.Key).Select(kv => kv.Value).ToList();
             }
+        }
+
+        public ConcurrentDictionary<double, long> GetValues()
+        {
+            return _values;
         }
 
         private static long Tick()
@@ -183,6 +190,8 @@ namespace metrics.Stats
                 var oldStartTime = _startTime;
                 _startTime = CurrentTimeInSeconds();
                 var keys = new List<double>(_values.Keys);
+                Debug.WriteLine(Math.Exp(-_alpha*(_startTime - oldStartTime)));
+
                 foreach (var key in keys)
                 {
                     long value;
