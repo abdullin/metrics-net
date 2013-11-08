@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package>
 	<metadata>
-		<id>Yammer.Metrics</id>
+		<id>Metrics</id>
 		<version>1.0.8</version>
 		<authors>Daniel Crenna</authors>
 		<owners>Daniel Crenna</owners>
